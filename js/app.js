@@ -93,7 +93,7 @@ function renderResults() {
   section.style.display = '';
   if (catalog) catalog.style.display = 'none';
 
-  const found = sortProducts(searchProducts(state.query, state.cat), state.sort);
+  const found = sortProducts(searchProducts(state.query, 'all'), state.sort);
   if (!found.length) {
     grid.innerHTML = `
       <div class="empty-state" style="grid-column:1/-1">
@@ -294,11 +294,22 @@ document.addEventListener('DOMContentLoaded', () => {
   let searchTimer;
   $('searchInput')?.addEventListener('input', e => {
     clearTimeout(searchTimer);
+    const q = e.target.value.trim();
+
+    if (q.length > 2) {
+      $('resultsGrid').innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+        <div class="skeleton" style="width:100px; height:20px; margin:0 auto 10px"></div>
+        <div class="empty-text">Ищем лучшие предложения...</div>
+      </div>`;
+      $('resultsSection').style.display = '';
+      $('catalogSection').style.display = 'none';
+    }
+
     searchTimer = setTimeout(() => {
-      state.query = e.target.value.trim();
+      state.query = q;
       state.page = 1;
       renderResults();
-    }, 280);
+    }, 600); // slightly longer for "search feel"
   });
 
   // Static Countries & Cities

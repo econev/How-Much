@@ -62,10 +62,12 @@ const RAW_PRODUCTS = [
   // Components
   { id: 6,  cat: 'components',  name: 'NVIDIA GeForce RTX 4070 Ti', basePrice: 69990,  avgWeekPrice: 78000,  ai: { trend: 'down', pct: 8, weeks: 3 } },
   { id: 7,  cat: 'components',  name: 'AMD Ryzen 9 7950X',          basePrice: 39990,  avgWeekPrice: 42000,  ai: { trend: 'down', pct: 5, weeks: 2 } },
+  { id: 71, cat: 'components',  name: 'AMD Ryzen 7 7800X3D Tray',   basePrice: 34990,  avgWeekPrice: 38000,  ai: { trend: 'up', pct: 4, weeks: 2 } },
   { id: 8,  cat: 'components',  name: 'Samsung 990 Pro 2TB NVMe',   basePrice: 14990,  avgWeekPrice: 16500,  ai: { trend: 'down', pct: 9, weeks: 4 } },
   { id: 9,  cat: 'components',  name: 'Corsair DDR5-6000 32GB Kit', basePrice: 12990,  avgWeekPrice: 13500,  ai: { trend: 'stable', pct: 2, weeks: 1 } },
   { id: 10, cat: 'components',  name: 'ASUS ROG Maximus Z790 Hero', basePrice: 44990,  avgWeekPrice: 46000,  ai: { trend: 'up', pct: 3, weeks: 2 } },
   { id: 101, cat: 'components', name: 'SSD Kingston A400 240 ГБ',   basePrice: 2500,   avgWeekPrice: 2800,   ai: { trend: 'stable', pct: 0, weeks: 1 } },
+  { id: 102, cat: 'components', name: 'Intel Core i9-14900K',       basePrice: 54990,  avgWeekPrice: 58000,  ai: { trend: 'stable', pct: 1, weeks: 1 } },
   // Laptops
   { id: 11, cat: 'laptops',     name: 'Apple MacBook Pro M3 Pro',   basePrice: 179990, avgWeekPrice: 185000, ai: { trend: 'stable', pct: 1, weeks: 1 } },
   { id: 12, cat: 'laptops',     name: 'ASUS ROG Zephyrus G16',      basePrice: 139990, avgWeekPrice: 148000, ai: { trend: 'down', pct: 5, weeks: 3 } },
@@ -76,6 +78,9 @@ const RAW_PRODUCTS = [
   { id: 16, cat: 'tvs',         name: 'LG OLED C3 65"',             basePrice: 99990,  avgWeekPrice: 105000, ai: { trend: 'down', pct: 5, weeks: 3 } },
   { id: 17, cat: 'tvs',         name: 'Sony Bravia XR A95L 55"',    basePrice: 119990, avgWeekPrice: 125000, ai: { trend: 'stable', pct: 1, weeks: 1 } },
   { id: 18, cat: 'tvs',         name: 'Hisense U8K Mini LED 65"',   basePrice: 69990,  avgWeekPrice: 77000,  ai: { trend: 'down', pct: 9, weeks: 4 } },
+  // PC Systems (new category mentioned)
+  { id: 21, cat: 'pc',          name: 'HyperPC LUMEN PRO',          basePrice: 249990, avgWeekPrice: 260000, ai: { trend: 'down', pct: 2, weeks: 2 } },
+  { id: 22, cat: 'pc',          name: 'CyberPowerPC Gamer Master',  basePrice: 129990, avgWeekPrice: 135000, ai: { trend: 'stable', pct: 1, weeks: 1 } },
 ];
 
 // ─── Build product DB ─────────────────────────────
@@ -112,16 +117,94 @@ function getBestDeals(n = 3) {
   return [...PRODUCTS].sort((a, b) => b.discount - a.discount).slice(0, n);
 }
 
+// ─── Dynamic Product Generator (The "AI" Search) ───────
+const CATEGORY_ESTIMATES = {
+  'iphone': { cat: 'smartphones', base: 90000 },
+  'samsung': { cat: 'smartphones', base: 70000 },
+  'pixel': { cat: 'smartphones', base: 60000 },
+  'xiaomi': { cat: 'smartphones', base: 40000 },
+  'rtx': { cat: 'components', base: 80000 },
+  'ryzen': { cat: 'components', base: 30000 },
+  'intel': { cat: 'components', base: 35000 },
+  'ssd': { cat: 'components', base: 8000 },
+  'macbook': { cat: 'laptops', base: 120000 },
+  'asus': { cat: 'laptops', base: 90000 },
+  'oled': { cat: 'tvs', base: 110000 },
+  'qled': { cat: 'tvs', base: 80000 },
+  'playstation': { cat: 'pc', base: 50000 },
+  'xbox': { cat: 'pc', base: 45000 },
+};
+
+function generateDynamicProducts(query, country) {
+  const q = query.toLowerCase();
+  const config = COUNTRY_CONFIG[country] || COUNTRY_CONFIG["Россия"];
+  
+  // Try to find a category estimate
+  let basePrice = 50000;
+  let category = 'components';
+  
+  for (const [key, val] of Object.entries(CATEGORY_ESTIMATES)) {
+    if (q.includes(key)) {
+      basePrice = val.base;
+      category = val.cat;
+      break;
+    }
+  }
+
+  // Generate 5 variations
+  const results = [];
+  const variations = [
+    { suffix: '', priceMult: 1.0 },
+    { suffix: ' Pro', priceMult: 1.2 },
+    { suffix: ' Max', priceMult: 1.4 },
+    { suffix: ' Lite', priceMult: 0.7 },
+    { suffix: ' Plus', priceMult: 1.1 }
+  ];
+
+  variations.forEach((v, i) => {
+    const localBase = Math.round(basePrice * v.priceMult * config.rate);
+    const avgWeek = Math.round(localBase * 1.1);
+    const stores = makeStores(localBase, '', country, query + v.suffix);
+    const minPrice = stores[0].price;
+    const discount = Math.round((1 - minPrice / avgWeek) * 100);
+
+    results.push({
+      id: 5000 + i + Math.floor(Math.random() * 1000),
+      cat: category,
+      name: query.charAt(0).toUpperCase() + query.slice(1) + v.suffix,
+      stores,
+      minPrice,
+      maxPrice: stores[stores.length - 1].price,
+      avgWeekPrice: avgWeek,
+      discount: Math.max(0, discount),
+      history: genHistory(localBase),
+    });
+  });
+
+  return results;
+}
+
 // ─── Search ────────────────────────────────────────
 function searchProducts(query, cat) {
   const q = query.toLowerCase().trim();
   const words = q.split(/\s+/).filter(Boolean);
-  return PRODUCTS.filter(p => {
+  
+  // 1. Search in static DB
+  const staticFound = PRODUCTS.filter(p => {
     const matchCat = !cat || cat === 'all' || p.cat === cat;
     const nameLower = p.name.toLowerCase();
     const matchQ = words.length === 0 || words.every(w => nameLower.includes(w));
     return matchCat && matchQ;
   });
+
+  // 2. If query exists but no static found (or just a few), generate dynamic ones
+  if (q.length > 2 && (staticFound.length < 2)) {
+    const dynamicFound = generateDynamicProducts(q, currentCountry);
+    // Merge them, prioritizing static products
+    return [...staticFound, ...dynamicFound.filter(d => !staticFound.some(s => s.name === d.name))];
+  }
+
+  return staticFound;
 }
 
 // ─── Sort ──────────────────────────────────────────
@@ -141,8 +224,8 @@ function fmtPrice(num) {
 
 // ─── Category label ────────────────────────────────
 const CAT_LABELS = {
-  ru: { smartphones:'Смартфоны', components:'Комплектующие', laptops:'Ноутбуки', tvs:'Телевизоры' },
-  en: { smartphones:'Smartphones', components:'Components', laptops:'Laptops', tvs:'TVs' },
+  ru: { all:'Все', pc:'ПК', smartphones:'Смартфоны', components:'Комплектующие', laptops:'Ноутбуки', tvs:'Телевизоры' },
+  en: { all:'All', pc:'PC', smartphones:'Smartphones', components:'Components', laptops:'Laptops', tvs:'TVs' },
 };
 
 function catLabel(cat) {
