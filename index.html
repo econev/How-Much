@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru" data-lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="description" content="How Much? — Сравнение цен на технику в твоём городе" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <title>How Much? — Сравнение цен</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@100..900&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="manifest" href="manifest.json" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="#" class="logo">
+        <span class="logo-mark">?</span>
+        <span class="logo-text">How Much</span>
+      </a>
+      <div class="header-actions">
+        <button class="lang-toggle glass-btn" id="langToggle" aria-label="Switch language">
+          <span class="lang-opt" data-lang-label="ru">RU</span>
+          <span class="lang-divider">/</span>
+          <span class="lang-opt" data-lang-label="en">EN</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SEARCH -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="noise-overlay"></div>
+      <div class="grid-lines"></div>
+    </div>
+    <div class="hero-content">
+      <p class="hero-eyebrow" data-i18n="hero.eyebrow">Сравнение цен · 2026</p>
+      <h1 class="hero-title">
+        <span data-i18n="hero.title1">Сколько это</span><br/>
+        <em data-i18n="hero.title2">стоит?</em>
+      </h1>
+      <p class="hero-sub" data-i18n="hero.sub">Реальные цены из магазинов вашего города — без рекламы и скрытых комиссий.</p>
+
+      <div class="search-block glass-box">
+        <div class="search-row">
+          <div class="search-field-wrap">
+            <span class="search-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </span>
+            <input
+              type="search"
+              id="searchInput"
+              class="search-input"
+              autocomplete="off"
+              data-i18n-placeholder="search.placeholder"
+              placeholder="iPhone 15, RTX 4070, Samsung QLED..."
+            />
+          </div>
+          <div class="location-selects" style="display: flex; gap: 8px;">
+            <div class="city-select-wrap glass-btn-sm">
+              <svg class="city-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+              <select id="countrySelect" class="city-select">
+                <option value="">Страна...</option>
+              </select>
+            </div>
+            <div class="city-select-wrap glass-btn-sm">
+              <svg class="city-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <select id="citySelect" class="city-select">
+                <option value="">Город...</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="category-chips" role="group" aria-label="Категории">
+          <button class="chip glass-btn active" data-cat="all" data-i18n="cat.all">Все</button>
+          <button class="chip glass-btn" data-cat="smartphones" data-i18n="cat.smartphones">Смартфоны</button>
+          <button class="chip glass-btn" data-cat="components" data-i18n="cat.components">Комплектующие</button>
+          <button class="chip glass-btn" data-cat="laptops" data-i18n="cat.laptops">Ноутбуки</button>
+          <button class="chip glass-btn" data-cat="tvs" data-i18n="cat.tvs">Телевизоры</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="section results-section" id="resultsSection" style="display:none">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-label-wrap">
+          <span class="section-dot accent"></span>
+          <span class="section-label" id="resultsLabel" data-i18n="results.label">Результаты поиска</span>
+        </div>
+        <div class="sort-controls">
+          <button class="sort-btn glass-btn active" data-sort="price_asc" data-i18n="sort.price_asc">↑ Цена</button>
+          <button class="sort-btn glass-btn" data-sort="price_desc" data-i18n="sort.price_desc">↓ Цена</button>
+          <button class="sort-btn glass-btn" data-sort="discount" data-i18n="sort.discount">% Скидка</button>
+        </div>
+      </div>
+      <div class="results-grid" id="resultsGrid">
+        <!-- JS populated -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ALL PRODUCTS -->
+  <section class="section catalog-section" id="catalogSection">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-label-wrap">
+          <span class="section-dot"></span>
+          <span class="section-label" data-i18n="catalog.label">Каталог</span>
+        </div>
+      </div>
+      <div class="results-grid" id="catalogGrid">
+        <!-- JS populated -->
+      </div>
+      <div class="load-more-wrap">
+        <button class="load-more glass-btn" id="loadMoreBtn" data-i18n="catalog.loadmore">Показать ещё</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- BEST DEALS TODAY -->
+  <section class="section deals-section">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-label-wrap">
+          <span class="section-dot"></span>
+          <span class="section-label" data-i18n="deals.label">Лучшие сделки сегодня</span>
+        </div>
+        <p class="section-sub" data-i18n="deals.sub">Топ-3 скидки относительно средней цены за неделю</p>
+      </div>
+      <div class="deals-grid" id="dealsGrid">
+        <!-- JS populated -->
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCT MODAL -->
+  <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
+    <div class="modal glass-box" id="productModal" role="dialog" aria-modal="true">
+      <button class="modal-close glass-btn" id="modalClose" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="modal-inner" id="modalInner">
+        <!-- JS populated -->
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo-mark sm">?</span>
+        <span class="footer-name">How Much?</span>
+      </div>
+      <p class="footer-note">
+        <span data-i18n="footer.note">Данные обновляются каждые 6 часов · Только для информации</span> · 
+        <a href="privacy-policy.html" class="privacy-link">Privacy Policy</a>
+      </p>
+      <p class="footer-copy">© 2026</p>
+    </div>
+  </footer>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
